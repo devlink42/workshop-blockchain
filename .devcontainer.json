@@ -15,11 +15,11 @@
       }
     },
     "postCreateCommand": "pipx install algokit && git clone https://github.com/algorandfoundation/algokit-utils-py.git && cd algokit-utils-py && pip install . && cd ..",
-    "postStartCommand": "algokit localnet start && sudo apt-get update && sudo apt-get install gh -y && gh auth login",
+    "postStartCommand": "algokit localnet start",
     "postAttachCommand": [
-        "gh codespace ports visibility 4001 --visibility public",
-        "gh codespace ports visibility 4002 --visibility public",
-        "gh codespace ports visibility 5173 --visibility public",
-        "gh codespace ports visibility 8980 --visibility public",
+        "gh codespace ports visibility 4001:public",
+        "gh codespace ports visibility 4002:public",
+        "gh codespace ports visibility 5173:public",
+        "gh codespace ports visibility 8980:public",
     ]
 }
