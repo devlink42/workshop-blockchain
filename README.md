@@ -25,13 +25,17 @@ pip install .
 cd ..
 ```
 
-## Install Algokit
+### Verify installation
+1. `$ algokit -version`
+2. `$ gh codespace ports`
+
+## Algokit
 
 ### Whats is Algokit
 
 AlgoKit compromises of a number of components that make it the one-stop shop tool for developers building on the Algorand network.
 
-### 
+### Explore the blockchain
 
 ## Resources
 
