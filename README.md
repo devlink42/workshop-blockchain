@@ -15,6 +15,16 @@ Create a new fork of this project on you Github repository.
 3. Click on <button style="background-color: green; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Create codespace on main</button>
 4. Wait for everything to be installed properly before going to the next part.
 
+>Following commands will be executed behind the scene:
+
+```shell
+pipx install algokit
+git clone https://github.com/algorandfoundation/algokit-utils-py.git
+cd algokit-utils-py
+pip install .
+cd ..
+```
+
 ## Install Algokit
 
 ### Whats is Algokit
