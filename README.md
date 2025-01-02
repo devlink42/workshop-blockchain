@@ -26,8 +26,11 @@ cd ..
 ```
 
 ### Verify installation
-1. `$ algokit -version`
+
+1. `$ algokit doctor`
 2. `$ gh codespace ports`
+
+> Everything should be installed properly except `poetry`. Port 4001, 4002, 5173, 8980 should be public.
 
 ## Algokit
 
@@ -36,6 +39,39 @@ cd ..
 AlgoKit compromises of a number of components that make it the one-stop shop tool for developers building on the Algorand network.
 
 ### Explore the blockchain
+
+Use the command `algokit explore`
+It will open a new page with the Algorand Explorer "lora".
+Anything you do on your local environment will be displayed here.
+
+> You can also see in real time what's going on the blockchain by switching to MainNet.
+
+## Workshop
+
+### Create a standalone file
+
+`$  touch workshop.py`
+
+### Environment configuration
+
+We will stay in localnet for this introduction.
+
+```python
+from algokit_utils import (
+    get_algod_client,
+    get_default_localnet_config
+)
+
+def client_configuration():
+    config = get_default_localnet_config("algod")
+    client = get_algod_client(config)
+    return client
+
+```
+
+### Account Creation
+
+We usually use Alice, Bob and Charlie as users to illustrate blockchain documentation.
 
 ## Resources
 
