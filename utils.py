@@ -22,3 +22,10 @@ def account_creation(client: AlgodClient, name: str, funds=0):
       f'Algo\t\t: %.6f \n' % 
       (name, account.address, info["created-assets"], info["assets"], info["amount"] / 1_000_000))    
     return account
+
+
+def get_asa_id(ptx):
+    if isinstance(ptx, dict) and "asset-index" in ptx and isinstance(ptx["asset-index"], int):
+        return ptx["asset-index"]
+    else:
+        raise ValueError("Unexpected response from pending_transaction_info")
