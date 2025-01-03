@@ -30,7 +30,7 @@ cd ..
 1. `$ algokit doctor`
 2. `$ gh codespace ports`
 
-> Everything should be installed properly except `poetry`. Port 4001, 4002, 5173, 8980 should be public.
+> Everything should be installed properly except `poetry`. Port 4001, 4002, 5443, 8980 should be public.
 
 ## Algokit
 
