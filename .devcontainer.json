@@ -14,7 +14,7 @@
         "label": "vite"
       }
     },
-    "postCreateCommand": "pipx install algokit && git clone https://github.com/algorandfoundation/algokit-utils-py.git && cd algokit-utils-py && pip install . && cd ..",
+    "postCreateCommand": "pipx install algokit && pipx install poetry && pip install algorand-python && git clone https://github.com/algorandfoundation/algokit-utils-py.git && cd algokit-utils-py && pip install . && cd ..",
     "postStartCommand": "algokit localnet start",
     "postAttachCommand":
         "CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 4001:public --codespace $CODESPACE_NAME && CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 4002:public --codespace $CODESPACE_NAME && CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 5173:public --codespace $CODESPACE_NAME && CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 8980:public --codespace $CODESPACE_NAME"

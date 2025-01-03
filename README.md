@@ -30,7 +30,7 @@ cd ..
 1. `$ algokit doctor`
 2. `$ gh codespace ports`
 
-> Everything should be installed properly except `poetry`. Port 4001, 4002, 5173, 8980 should be public.
+> Everything should be installed properly. Port 4001, 4002, 5173, 8980 should be public.
 
 ## Algokit
 
@@ -98,6 +98,15 @@ We usually use Alice, Bob and Charlie as users to illustrate blockchain document
     bob = account_creation(client, "BOB")
     charly = account_creation(client, "CHARLY")
 ```
+
+### Smart contract
+
+create an app.py file
+`touch app.py`
+create an app folder
+`mkdir app`
+compile the smart contract
+`algokit compile py --out-dir ./app app.py`
 
 ## Resources
 
