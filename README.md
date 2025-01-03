@@ -57,22 +57,58 @@ Anything you do on your local environment will be displayed here.
 We will stay in localnet for this introduction.
 
 ```python
-from algokit_utils import (
-    get_algod_client,
-    get_default_localnet_config
-)
-
 def client_configuration():
     config = get_default_localnet_config("algod")
     client = get_algod_client(config)
     return client
-
 ```
+
+
+
 
 ### Account Creation
 
+```python
+def account_creation(client: AlgodClient, name: str, funds=0):
+    account = get_account(client, name) if funds == 0 else get_account(client, name, fund_with_algos=funds)
+    info = client.account_info(account.address)
+    print(f'Name\t\t: %s \n'
+      f'Address\t\t: %s\n'
+      f'Created Asset\t: %s\n'
+      f'Assets\t\t: %s\n'
+      f'Algo\t\t: %.6f \n' % 
+      (name, account.address, info["created-assets"], info["assets"], info["amount"] / 1_000_000))    
+    return account
+```
+
+### Import from the utils files
+
+```python
+from utils import client_configuration, account_creation
+```
+
+### Usage
+
 We usually use Alice, Bob and Charlie as users to illustrate blockchain documentation.
+
+```python
+    client = client_configuration()
+    
+    alice = account_creation(client, "ALICE", funds=100_000_000)
+    bob = account_creation(client, "BOB")
+    charly = account_creation(client, "CHARLY")
+```
 
 ## Resources
 
-[Install AlgoKit](https://github.com/algorandfoundation/algokit-cli/blob/main/README.md#install) | [Quick Start Tutorial](https://github.com/algorandfoundation/algokit-cli/blob/main/docs/tutorials/intro.md) | [Documentation](https://github.com/algorandfoundation/algokit-cli/blob/main/docs/algokit.md)
+[Install AlgoKit](https://github.com/algorandfoundation/algokit-cli/blob/main/README.md#install)
+
+[Quick Start Tutorial](https://github.com/algorandfoundation/algokit-cli/blob/main/docs/tutorials/intro.md)
+
+[Documentation](https://github.com/algorandfoundation/algokit-cli/blob/main/docs/algokit.md)
+
+[Algokit Utils](https://algorandfoundation.github.io/algokit-utils-py/html/index.html)
+
+[Algorand Sdk](https://py-algorand-sdk.readthedocs.io/en/latest/)
+
+[Transactions](https://developer.algorand.org/docs/get-details/transactions/transactions/)
