@@ -1,18 +1,20 @@
-from utils import client_configuration, account_creation
+import algokit_utils.application_client
+from utils import client_configuration, indexer_configuration, account_creation
 import algokit_utils
 import algosdk, base64
 from Cryptodome.Hash import SHA512
 
 if __name__ == "__main__":
-    client = client_configuration()
-    alice = account_creation(client, "ALICE", funds=100_000_000)
-    bob = account_creation(client, "BOB")
-    charly = account_creation(client, "CHARLY")
+    algod_client = client_configuration()
+    indexer_client = indexer_configuration()
+    alice = account_creation(algod_client, "ALICE", funds=100_000_000)
+    bob = account_creation(algod_client, "BOB")
+    charly = account_creation(algod_client, "CHARLY")
 
-    if len(client.account_info(alice.address)["created-assets"]) == 0:
+    if len(algod_client.account_info(alice.address)["created-assets"]) == 0:
         create_asa =  algosdk.transaction.AssetCreateTxn(
         sender=alice.address,
-        sp=client.suggested_params(),
+        sp=algod_client.suggested_params(),
         total=15,
         decimals=0,
         default_frozen=False,
@@ -22,32 +24,32 @@ if __name__ == "__main__":
         note="Hello Clermont",
         )
         create_asa_signed = create_asa.sign(alice.private_key)
-        create_asa_tx_id = client.send_transaction(create_asa_signed)
-        res = algosdk.transaction.wait_for_confirmation(client, create_asa_tx_id, 4)
+        create_asa_tx_id = algod_client.send_transaction(create_asa_signed)
+        res = algosdk.transaction.wait_for_confirmation(algod_client, create_asa_tx_id, 4)
         asset_id = res["asset-index"]
     else:
-        asset_id = client.account_info(alice.address)["created-assets"][0]["index"]
+        asset_id = algod_client.account_info(alice.address)["created-assets"][0]["index"]
     print("Asset ID:", asset_id)
 
-    if len(client.account_info(bob.address)["assets"]) == 0:
+    if len(algod_client.account_info(bob.address)["assets"]) == 0:
         atc = algosdk.atomic_transaction_composer.AtomicTransactionComposer()
 
         opt_in_asa = algosdk.transaction.AssetOptInTxn(
             sender=bob.address,
-            sp=client.suggested_params(),
+            sp=algod_client.suggested_params(),
             index= asset_id
         )
 
         pay_alice = algosdk.transaction.PaymentTxn(
             sender=bob.address,
-            sp=client.suggested_params(),
+            sp=algod_client.suggested_params(),
             receiver=alice.address,
             amt=10_000_000, # Micro Algo
         )
 
         send_asa = algosdk.transaction.AssetTransferTxn(
             sender=alice.address,
-            sp=client.suggested_params(),
+            sp=algod_client.suggested_params(),
             amt=1,
             receiver=bob.address,
             index=asset_id
@@ -61,21 +63,20 @@ if __name__ == "__main__":
         atc.add_transaction(pay_alice_tws)
         atc.add_transaction(send_asa_tws)
 
-        atc.execute(client, 4)
+        atc.execute(algod_client, 4)
 
+    price = 10
 
-    if len(client.account_info(alice.address)["created-apps"]) == 0:
+    if len(algod_client.account_info(alice.address)["created-apps"]) == 0:
         with open("app/DigitalMarketplace.approval.teal", "r") as f:
             approval_program = f.read()
         with open("app/DigitalMarketplace.clear.teal", "r") as f:
             clear_program = f.read()
 
-        approval_result = client.compile(approval_program)
+        approval_result = algod_client.compile(approval_program)
         approval_binary = base64.b64decode(approval_result["result"])
 
-        price = 10
-
-        clear_result = client.compile(clear_program)
+        clear_result = algod_client.compile(clear_program)
         clear_binary = base64.b64decode(clear_result["result"])
         # Native conversion
         asset_id_bytes = asset_id.to_bytes(4, 'big')  # Convert asset_id to 4 bytes in big-endian order
@@ -99,7 +100,7 @@ if __name__ == "__main__":
         algokit_utils.TransactionParameters()
         app_create_txn = algosdk.transaction.ApplicationCreateTxn(
             alice.address,
-            sp=client.suggested_params(),
+            sp=algod_client.suggested_params(),
             on_complete=algosdk.transaction.OnComplete.NoOpOC,
             approval_program=approval_binary,
             clear_program=clear_binary,
@@ -109,27 +110,20 @@ if __name__ == "__main__":
             foreign_assets=[asset_id]
         )
         signed_create_txn = app_create_txn.sign(alice.private_key)
-        txid = client.send_transaction(signed_create_txn)
-        result = algosdk.transaction.wait_for_confirmation(client, txid, 4)
+        txid = algod_client.send_transaction(signed_create_txn)
+        result = algosdk.transaction.wait_for_confirmation(algod_client, txid, 4)
         app_id = result["application-index"]
     else:
-        app_id = client.account_info(alice.address)["created-apps"][0]["id"]
-    print(app_id)
-    # print(f"App with id: {app_id}")
-    # # with open("app/DigitalMarketplace.arc32.json", 'r', encoding='utf-8') as file:
-    # #     app_spec = file.read()
+        app_id = algod_client.account_info(alice.address)["created-apps"][0]["id"]
 
-    # # app_client = algokit_utils.ApplicationClient(  # type: ignore[call-overload, misc]
-    # #         algod_client=client,
-    # #         app_spec=app_spec,
-    # #         app_id=0,
-    # #         creator=alice.address,
-    # #         indexer_client=None,
-    # #         existing_deployments=None,
-    # #         signer=alice.signer,
-    # #         sender=alice.address,
-    # #         suggested_params=client.suggested_params(),
-    # #         app_name="DigitalMarketPlace",
-    # #     )
-    # # app_client.create("create_application",
-    # #                   )
+
+    from client import DigitalMarketplaceClient
+    app_client = DigitalMarketplaceClient(
+        algod_client,
+        creator=alice,
+        indexer_client=indexer_client
+    )
+    app_client.create_create_application(asset_id=asset_id, unitary_price=price)
+    print(f"App {app_client.app_id} deployed")
+
+    

@@ -2,6 +2,7 @@ from algokit_utils import (
     get_algod_client,
     get_default_localnet_config,
     get_account,
+    get_indexer_client
 )
 from algosdk.v2client.algod import AlgodClient
 
@@ -9,6 +10,11 @@ from algosdk.v2client.algod import AlgodClient
 def client_configuration():
     config = get_default_localnet_config("algod")
     client = get_algod_client(config)
+    return client
+
+def indexer_configuration():
+    config = get_default_localnet_config("indexer")
+    client = get_indexer_client(config)
     return client
 
 
