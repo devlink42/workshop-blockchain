@@ -42,9 +42,20 @@ class DigitalMarketplace(arc4.ARC4Contract):
         ).submit()
 
     @arc4.abimethod
-    def buy(self,quantity: UInt64) -> None:
-        assert Txn.receiver == Global.current_application_address
-        assert Txn.amount == self.unitary_price * quantity
+    def buy(
+        self,
+        # To buy assets, a payment must be sent
+        buyer_txn: gtxn.PaymentTransaction,
+        # The quantity of assets to buy
+        quantity: UInt64,
+    ) -> None:
+        # We need to verify that the payment is being sent to the application
+        # and is enough to cover the cost of the asset
+        assert buyer_txn.sender == Txn.sender
+        assert buyer_txn.receiver == Global.current_application_address
+        assert buyer_txn.amount == self.unitary_price * quantity
+
+        # Once we've verified the payment, we can transfer the asset
         itxn.AssetTransfer(
             xfer_asset=self.asset_id,
             asset_receiver=Txn.sender,

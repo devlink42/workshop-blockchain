@@ -19,12 +19,6 @@ def indexer_configuration():
     return client
 
 
-def indexer_configuration():
-    config = get_default_localnet_config("indexer")
-    client = get_indexer_client(config)
-    return client
-
-
 def account_creation(client: AlgodClient, name: str, funds=0):
     account = get_account(client, name) if funds == 0 else get_account(
         client, name, fund_with_algos=funds)
@@ -39,6 +33,7 @@ def account_creation(client: AlgodClient, name: str, funds=0):
     if len(info["created-apps"]) > 0:
         print(f'Created-Apps\t: %s \n' % info["created-apps"][0]["id"])
     print("")
+    return account
 
 
 def get_asa_id(ptx):
