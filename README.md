@@ -108,7 +108,7 @@ create an app folder
 compile the smart contract
 `algokit compile py --out-dir ./app app.py`
 generate the client 
-`algokit generate client app/DigitalMarketplace.arc32.json --output app/client.py`
+`algokit generate client app/DigitalMarketplace.arc32.json --output client.py`
 
 
 ## Resources
