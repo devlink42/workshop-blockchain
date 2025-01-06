@@ -1,4 +1,5 @@
 import algokit_utils.application_client
+import os
 from utils import client_configuration, indexer_configuration, account_creation, display_info
 import algokit_utils
 import algosdk, base64
@@ -73,7 +74,8 @@ if __name__ == "__main__":
 
     print("Alice Create a smart contract")
     # compile the smart contract
-    # `algokit compile py --out-dir ./app app.py`
+
+    os.system("algokit compile py --out-dir ./app app.py")
 
     # if len(algod_client.account_info(alice.address)["created-apps"]) == 0:
     #     with open("app/DigitalMarketplace.approval.teal", "r") as f:
@@ -128,6 +130,7 @@ if __name__ == "__main__":
     # generate the client 
     # `algokit generate client app/DigitalMarketplace.arc32.json --output client.py`
 
+    os.system("algokit generate client app/DigitalMarketplace.arc32.json --output client.py")
     
     from client import DigitalMarketplaceClient,Composer
     app_client = DigitalMarketplaceClient(
