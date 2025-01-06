@@ -67,6 +67,9 @@ if __name__ == "__main__":
 
     price = 10
 
+    # compile the smart contract
+    # `algokit compile py --out-dir ./app app.py`
+
     if len(algod_client.account_info(alice.address)["created-apps"]) == 0:
         with open("app/DigitalMarketplace.approval.teal", "r") as f:
             approval_program = f.read()
@@ -117,13 +120,22 @@ if __name__ == "__main__":
         app_id = algod_client.account_info(alice.address)["created-apps"][0]["id"]
 
 
+    # generate the client 
+    # `algokit generate client app/DigitalMarketplace.arc32.json --output client.py`
+
     from client import DigitalMarketplaceClient
     app_client = DigitalMarketplaceClient(
         algod_client,
         creator=alice,
         indexer_client=indexer_client
     )
-    app_client.create_create_application(asset_id=asset_id, unitary_price=price)
-    print(f"App {app_client.app_id} deployed")
 
-    
+    if len(algod_client.account_info(alice.address)["created-apps"]) == 0:
+        app_client.create_create_application(asset_id=asset_id, unitary_price=price)
+        print(f"App {app_client.app_id} deployed")
+    else:
+        app_id = algod_client.account_info(alice.address)["created-apps"][0]["id"]
+
+    print(app_id)
+
+    print(app_client.app_id)
