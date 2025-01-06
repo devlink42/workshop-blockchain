@@ -34,6 +34,7 @@ def account_creation(client: AlgodClient, name: str, funds=0):
     if len(info["created-apps"]) > 0:
         print(f'Created-Apps\t: %s \n' % info["created-apps"][0]["id"])
     print("")
+    return account
 
 
 def get_asa_id(ptx):
