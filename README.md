@@ -15,6 +15,8 @@ Create a new fork of this project on you Github repository.
 3. Click on the Create codespace on main button.
 4. Wait for the setup to complete before proceeding to the next step.
 
+> It will prompt you a message to install the "Python extension for Visual Studio Code", I would recommand to accept to avoid some warnings about missing dependencies
+
 ### Verify installation
 
 1. `$ algokit doctor` You should have something similar to the following:
