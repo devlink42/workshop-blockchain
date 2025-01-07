@@ -1,4 +1,3 @@
-import algokit_utils.application_client
 import os
 from utils import client_configuration, indexer_configuration, account_creation, display_info
 import algokit_utils
@@ -8,12 +7,16 @@ from Cryptodome.Hash import SHA512
 if __name__ == "__main__":
     algod_client = client_configuration()
     indexer_client = indexer_configuration()
+
+    print(algod_client.block_info(0))
+    print(indexer_client.health())
+
     alice = account_creation(algod_client, "ALICE", funds=100_000_000)
     bob = account_creation(algod_client, "BOB")
     charly = account_creation(algod_client, "CHARLY")
 
-    print("BOB Buy 1 Token at 10 Algo from Alice\n")
-
+    print("Alice Create a Token")
+    
     if len(algod_client.account_info(alice.address)["created-assets"]) == 0:
         create_asa =  algosdk.transaction.AssetCreateTxn(
         sender=alice.address,
@@ -34,6 +37,7 @@ if __name__ == "__main__":
         asset_id = algod_client.account_info(alice.address)["created-assets"][0]["index"]
     print("Asset ID:", asset_id)
 
+    print("BOB Buy 1 Token at 10 Algo from Alice\n")
     if len(algod_client.account_info(bob.address)["assets"]) == 0:
         atc = algosdk.atomic_transaction_composer.AtomicTransactionComposer()
 
