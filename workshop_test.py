@@ -190,7 +190,8 @@ if __name__ == "__main__":
 
     if len(algod_client.account_info(charly.address)["assets"]) == 0:
         sp = algod_client.suggested_params()
-        sp.fee = sp.min_fee # extra_fee
+        sp.fee = 2 * sp.min_fee # extra_fee
+        sp.flat_fee = True
         amount_to_buy = 2
 
         opt_in_asa = algosdk.transaction.AssetOptInTxn(
@@ -230,7 +231,7 @@ if __name__ == "__main__":
 
     sp = algod_client.suggested_params()
     sp.fee = 3*sp.min_fee 
-
+    sp.flat_fee = True
     # Delete the smart contract application
     result = app_client.delete_delete_application(
         transaction_parameters=algokit_utils.TransactionParameters(
@@ -241,3 +242,5 @@ if __name__ == "__main__":
     )
     
     display_info(algod_client, ["ALICE","BOB","CHARLY"])
+
+

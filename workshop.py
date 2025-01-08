@@ -8,8 +8,13 @@ if __name__ == "__main__":
     indexer_client = indexer_configuration()
     print(algod_client.block_info(0))
     print(indexer_client.health())
-
-    alice = account_creation(algod_client, "ALICE", funds=100_000_000)
+    if not(os.path.exists(".env")):
+        alice = account_creation(algod_client, "ALICE", funds=100_000_000)
+        with open(".env", "w") as file:
+            file.write(algosdk.mnemonic.from_private_key(alice.private_key))
+    with open(".env", "r") as file:
+        mnemonic = file.read()
+    alice = algokit_utils.models.Account(private_key=algosdk.mnemonic.to_private_key(mnemonic))
     bob = account_creation(algod_client, "BOB")
     charly = account_creation(algod_client, "CHARLY")
     
@@ -89,7 +94,8 @@ if __name__ == "__main__":
     print(f"App {app_id} deployed with address {app_client.app_address}")
 
     sp = algod_client.suggested_params()
-    sp.fee = sp.min_fee # extra_fee
+    sp.fee = 2 * sp.min_fee # extra_fee
+    sp.flat_fee = True
     mbr_pay_txn = algosdk.transaction.PaymentTxn(
         sender=alice.address,
         sp=sp,
@@ -161,7 +167,7 @@ if __name__ == "__main__":
 
     sp = algod_client.suggested_params()
     sp.fee = 3*sp.min_fee 
-
+    sp.flat_fee = True
     # Delete the smart contract application
     app_client.delete_delete_application(
         transaction_parameters=algokit_utils.TransactionParameters(
