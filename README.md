@@ -388,7 +388,8 @@ sequenceDiagram
 
 ```python
     sp = algod_client.suggested_params()
-    sp.fee = sp.min_fee # extra_fee
+    sp.fee = 2 * sp.min_fee # extra_fee
+    sp.flat_fee = True
     mbr_pay_txn = algosdk.transaction.PaymentTxn(
         sender=alice.address,
         sp=sp,
@@ -540,3 +541,42 @@ Run the `algokit localnet reset command`.
 - [Quick Start Tutorial](https://github.com/algorandfoundation/algokit-cli/blob/main/docs/tutorials/intro.md)
 - [Documentation](https://github.com/algorandfoundation/algokit-cli/blob/main/docs/algokit.md)
 - [Transactions](https://developer.algorand.org/docs/get-details/transactions/transactions/)
+
+## Interact with testnet
+
+> You can find [here](https://github.com/SudoWeezy/Introduction/blob/workshop/workshop_testnet.py)
+The code to deploy the app to testnet.
+
+Here our main goal is to make you interact with the testnet network.
+
+> Try to use Chrome based browser
+> You might need to go to `chrome://flags`  and enable Experimental Web Platform features
+
+1. Go to  [Testnet Lora Explorer User Interface](https://lora.algokit.io/testnet)
+2. Click on `Connect Wallet`
+3. Select `Connect Lute`
+4. Click on `Add an Account`
+5. Click on `Hot Account`
+6. Here You can either import what's in your .env file (if you used the script provided earlier) or create a new account.
+7. You should now be able to connect to Lora
+8. You can get some free tesnetAlgo by going to [fund](https://lora.algokit.io/testnet/fund) (1 Algo is enough for what we will do on the next part)
+
+### Opt-in to the assed_id = 732175289
+
+1. Go to Txn Wizard
+2. Click on `Add Transaction`
+3. Select `Asset opt-in`
+4. Enter 732175289 in the `Asset ID` input box
+5. Click on `Add` then `Send`
+6. Now go to [application/732178075](https://lora.algokit.io/testnet/application/732178075)
+7. Click on `buy`
+8. Enter the 1 in the `Value` input Box then `Add`
+9. Click on `+ Build the transaction passed in as an argument`
+10. Enter `UCPRX4NXARSZTTQF4LB7S7W7OY5OZNOSNV5GOWFJK4XIY435D3ZO2NW27Q` in the `Receiver`Check box (it's the address of the smart contract)
+11. Enter `0.1`in Amount to pay
+12. Uncheck `Set fee automatically`and enter `0.002` ( there are 2 Transaction, the Payment and the Buy) then `Add`
+13. Click on `Populate Ressource`
+14. Click on `Send`
+15. Now if you click on your Account on the top Left and on `View`, you will see that you have `Proof of Attendance Py-Clermont`in your Assets held.
+
+> To be able to use the ABI methods, the ARC-32 json file has been added here [here](https://lora.algokit.io/testnet/app-lab/create)
