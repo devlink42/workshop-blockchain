@@ -86,40 +86,19 @@ if __name__ == "__main__":
     os.system(
         "algokit generate client app/DigitalMarketplace.arc32.json --output client.py"
     )
-    with open("app/DigitalMarketplace.arc32.json", "r") as file:
-        arc32_json = file.read()  # Read file content as string
     from client import DigitalMarketplaceClient, Composer
-    # from algokit_utils.applications import AppClient, Arc32Contract
+    # from algokit_utils.applications import AppClient, Arc56Contract
     app_client = DigitalMarketplaceClient(
         algod_client, signer=alice, indexer_client=indexer_client
     )
-    
+    att.AppCallMethodCallParams
     app_client.create_create_application(
         asset_id=asset_id, unitary_price=price.micro_algo
     )
     app_id = app_client.app_id
 
-    # app_client = AppClient.from_network(
-    #     app_spec=Arc32Contract.from_json(arc32_json),
-    #     algorand=algorand
-    #     )
-
-    # app_client = algorand.client.get_app_factory(
-    #     app_spec=Arc32Contract.from_json(arc32_json),
-    #     default_sender=alice.address,
-    #     default_signer=alice.signer
-    # ).deploy(
-
-    # )
-    # app_client = AppClient.from_network(
-    #     app_spec=Arc32Contract.from_json(arc32_json),
-    #     algorand=algorand,
-
-    # )
-
     display_info(algorand, ["ALICE"])
     print(f"App {app_id} deployed with address {app_client.app_address}")
-
 
     sp = algorand.get_suggested_params()
     sp.flat_fee = True
@@ -132,7 +111,7 @@ if __name__ == "__main__":
             extra_fee=AlgoAmount(micro_algo=sp.min_fee)
         )
     )
-    
+
     app_client.opt_in_to_asset(
         mbr_pay=att.TransactionWithSigner(mbr_pay_txn, alice.signer),
         transaction_parameters=TransactionParameters(
@@ -162,24 +141,14 @@ if __name__ == "__main__":
     amt_to_buy = 2
     print(f"Charly buy {amt_to_buy} token")
 
-    # composer = app_client.new_group()
+    composer = algorand.new_group()
 
-    # composer.add_asset_opt_in(
-    #     att.AssetOptInParams(
-    #         sender=charly.address,
-    #         signer=charly.signer,
-    #         asset_id=asset_id
-    #     )
-    # )
-    asset_opt_in = algorand.create_transaction.asset_opt_in(
+    composer.add_asset_opt_in(
         att.AssetOptInParams(
             sender=charly.address,
+            signer=charly.signer,
             asset_id=asset_id
         )
-    )
-    asset_opt_in_tws = att.TransactionWithSigner(
-        txn=asset_opt_in,
-        signer=charly.signer
     )
     buyer_payment_txn = algorand.create_transaction.payment(
         att.PaymentParams(
@@ -191,13 +160,11 @@ if __name__ == "__main__":
             extra_fee=AlgoAmount(micro_algo=sp.min_fee)
         )
     )
-
     atc = att.AtomicTransactionComposer()
-    atc.add_transaction(asset_opt_in_tws)
     app_client_composer = Composer(
         app_client=app_client.app_client, atc=atc
     )
-    buy_txn = app_client_composer.buy(
+    composer.add_atc(app_client_composer.buy(
         buyer_txn=att.TransactionWithSigner(
             txn=buyer_payment_txn,
             signer=charly.signer
@@ -209,23 +176,22 @@ if __name__ == "__main__":
             # Inform the AVM that the transaction uses this asset
             foreign_assets=[asset_id],
         ),
-    ).build()
+    ).build())
 
-    buy_txn.execute(algod_client, wait_rounds=4)
+    composer.send()
 
     display_info(algorand, ["CHARLY"])
 
     print("Alice delete the app and get ASA and Algo back")
+    # Delete the smart contract
 
-    algorand.send.app_call_method_call
-    # Delete the smart contract 
-    sp.fee = 3*sp.min_fee 
-    sp.flat_fee = True
+    sp.fee = 3*sp.min_fee
     app_client.delete_delete_application(
         transaction_parameters=TransactionParameters(
             # Tell the AVM that the transaction involves this asset
             foreign_assets=[asset_id],
             suggested_params=sp,
+
         )
     )
 
