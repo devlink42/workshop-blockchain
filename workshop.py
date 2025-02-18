@@ -1,180 +1,193 @@
 import os
 import algosdk
-import algokit_utils
-from utils import client_configuration, indexer_configuration, account_creation, display_info
+import algokit_utils as au
+import algokit_utils.transactions.transaction_composer as att
+
+from utils import (
+    account_creation,
+    display_info,
+)
+
 
 if __name__ == "__main__":
-    algod_client = client_configuration()
-    indexer_client = indexer_configuration()
+    algorand = au.AlgorandClient.from_environment()
+
+    algod_client = algorand.client.algod
+    indexer_client = algorand.client.indexer
+
     print(algod_client.block_info(0))
     print(indexer_client.health())
-    if not(os.path.exists(".env")):
-        alice = account_creation(algod_client, "ALICE", funds=100_000_000)
-        with open(".env", "w") as file:
-            file.write(algosdk.mnemonic.from_private_key(alice.private_key))
-    with open(".env", "r") as file:
-        mnemonic = file.read()
-    alice = algokit_utils.models.Account(private_key=algosdk.mnemonic.to_private_key(mnemonic))
-    bob = account_creation(algod_client, "BOB")
-    charly = account_creation(algod_client, "CHARLY")
-    
-    print("Alice Create a Token")
 
-    create_asa_txn =  algosdk.transaction.AssetCreateTxn(
-    sender=alice.address,
-    sp=algod_client.suggested_params(),
-    total=15,
-    decimals=0,
-    default_frozen=False,
-    unit_name="PY-CL-FD", # 8 Max
-    asset_name="Proof of Attendance Py-Clermont",
-    url="https://pyclermont.org/",
-    note="Hello Clermont",
+    alice = account_creation(algorand, "ALICE", au.AlgoAmount(algo=10000))
+    with open(".env", "w") as file:
+        file.write(algosdk.mnemonic.from_private_key(alice.private_key))
+    bob = account_creation(algorand, "BOB", au.AlgoAmount(algo=100))
+    charly = account_creation(algorand, "CHARLY", au.AlgoAmount(algo=100))
+
+    print("Alice Create a Token")
+    result = algorand.send.asset_create(
+        au.AssetCreateParams(
+            sender=alice.address,
+            signer=alice.signer,
+            total=15,
+            decimals=0,
+            default_frozen=False,
+            unit_name="PY-CL-FD",  # 8 Max
+            asset_name="Proof of Attendance Py-Clermont",
+            url="https://pyclermont.org/",
+            note="Hello Clermont",
+        )
     )
-    create_asa_signed = create_asa_txn.sign(alice.private_key)
-    create_asa_tx_id = algod_client.send_transaction(create_asa_signed)
-    res = algosdk.transaction.wait_for_confirmation(algod_client, create_asa_tx_id, 4)
-    asset_id = res["asset-index"]
+    asset_id = result.confirmation["asset-index"]
 
     print("BOB Buy 1 Token at 10 Algo from Alice\n")
-    atc = algosdk.atomic_transaction_composer.AtomicTransactionComposer()
 
-    opt_in_asa = algosdk.transaction.AssetOptInTxn(
-        sender=bob.address,
-        sp=algod_client.suggested_params(),
-        index= asset_id
+    composer = algorand.new_group()
+
+    composer.add_asset_opt_in(
+        au.AssetOptInParams(
+            sender=bob.address,
+            signer=bob.signer,
+            asset_id=asset_id
+        )
+    )
+    composer.add_payment(
+        au.PaymentParams(
+            sender=bob.address,
+            signer=bob.signer,
+            receiver=alice.address,
+            amount=au.AlgoAmount(algo=10),
+        )
+    )
+    composer.add_asset_transfer(
+        au.AssetTransferParams(
+            sender=alice.address,
+            signer=alice.signer,
+            receiver=bob.address,
+            amount=1,
+            asset_id=asset_id,
+        )
     )
 
-    pay_alice = algosdk.transaction.PaymentTxn(
-        sender=bob.address,
-        sp=algod_client.suggested_params(),
-        receiver=alice.address,
-        amt=10_000_000, # Micro Algo
-    )
+    result = composer.send()
 
-    send_asa = algosdk.transaction.AssetTransferTxn(
-        sender=alice.address,
-        sp=algod_client.suggested_params(),
-        amt=1,
-        receiver=bob.address,
-        index=asset_id
-    )
+    price = au.AlgoAmount(algo=10)
 
-    opt_in_tws = algosdk.atomic_transaction_composer.TransactionWithSigner(opt_in_asa, bob.signer)
-    pay_alice_tws = algosdk.atomic_transaction_composer.TransactionWithSigner(pay_alice, bob.signer)
-    send_asa_tws = algosdk.atomic_transaction_composer.TransactionWithSigner(send_asa, alice.signer)
-
-    atc.add_transaction(opt_in_tws)
-    atc.add_transaction(pay_alice_tws)
-    atc.add_transaction(send_asa_tws)
-
-    atc.execute(algod_client, 4)
-
-    price = 10_000_000
-
-    display_info(algod_client, ["ALICE", "BOB"])
+    display_info(algorand, ["ALICE", "BOB"])
 
     print("Alice Create a smart contract")
     # compile the smart contract
 
     os.system("algokit compile py --out-dir ./app app.py")
-    os.system("algokit generate client app/DigitalMarketplace.arc32.json --output client.py")
+    os.system(
+        "algokit generate client app/DigitalMarketplace.arc32.json --output client.py"
+    )
+    import client as cl
 
-    from client import DigitalMarketplaceClient,Composer
-    app_client = DigitalMarketplaceClient(
-        algod_client,
-        creator=alice,
-        indexer_client=indexer_client
+    factory = algorand.client.get_typed_app_factory(
+        cl.DigitalMarketplaceFactory, default_sender=alice.address
     )
 
-    app_client.create_create_application(asset_id=asset_id, unitary_price=price)
-    app_id = app_client.app_id
-    
-    display_info(algod_client, ["ALICE"])
-    print(f"App {app_id} deployed with address {app_client.app_address}")
-
-    sp = algod_client.suggested_params()
-    sp.fee = 2 * sp.min_fee # extra_fee
-    sp.flat_fee = True
-    mbr_pay_txn = algosdk.transaction.PaymentTxn(
-        sender=alice.address,
-        sp=sp,
-        receiver=app_client.app_address,
-        amt=200_000, #0,1 account creation + 0,1 Hold ASA
-    )
-
-    app_client.opt_in_to_asset(
-        mbr_pay=algosdk.atomic_transaction_composer.TransactionWithSigner(mbr_pay_txn, signer=alice.signer),
-        transaction_parameters=algokit_utils.TransactionParameters(
-            # The asset ID must be declared for the Algorand Virtual Machine (AVM) to use it
-            foreign_assets=[asset_id]
+    result, _ = factory.send.create.create_application(
+        cl.CreateApplicationArgs(
+            asset_id=asset_id, unitary_price=price.micro_algo
         )
     )
-    
+    app_id = result.app_id
+    ac = factory.get_app_client_by_id(app_id, default_sender=alice.address)
 
-    print(f"App can now Hold ASA-ID= {algod_client.account_info(app_client.app_address)['assets']}")
+    display_info(algorand, ["ALICE"])
+    print(f"App {app_id} deployed with address {ac.app_address}")
+
+    sp = algorand.get_suggested_params()
+
+    mbr_pay_txn = algorand.create_transaction.payment(
+        au.PaymentParams(
+            sender=alice.address,
+            receiver=ac.app_address,
+            amount=au.AlgoAmount(algo=0.2),
+            extra_fee=au.AlgoAmount(micro_algo=sp.min_fee)
+        )
+    )
+
+    ac.send.opt_in_to_asset(
+        cl.OptInToAssetArgs(
+            mbr_pay=att.TransactionWithSigner(mbr_pay_txn, alice.signer)
+        ),
+        au.CommonAppCallParams(
+            asset_references=[asset_id]
+        )
+    )
+
+    print(
+        f"App can now Hold ASA-ID= {
+            algod_client.account_info(ac.app_address)['assets']
+        }"
+    )
 
     print("Alice send ASAs to the App")
-    algod_client.send_transaction(algosdk.transaction.AssetTransferTxn(
-        sender=alice.address,
-        sp=algod_client.suggested_params(),
-        amt=10,
-        receiver=app_client.app_address,
-        index=asset_id
-    ).sign(alice.private_key))
-    print(f"Hold ASA-ID= {algod_client.account_info(app_client.app_address)['assets']}")
-
-    amount_to_buy = 2
-    print("Charly buy {amount_to_buy} token")
-    sp = algod_client.suggested_params()
-    sp.fee = sp.min_fee # extra_fee
-
-    opt_in_asa = algosdk.transaction.AssetOptInTxn(
-        sender=charly.address,
-        sp=algod_client.suggested_params(),
-        index= asset_id
-    )
-    opt_in_tws = algosdk.atomic_transaction_composer.TransactionWithSigner(opt_in_asa, charly.signer)
-
-    buyer_payment_txn = algosdk.transaction.PaymentTxn(
-        sender=charly.address,
-        sp=sp,
-        receiver=app_client.app_address,
-        amt=amount_to_buy * app_client.get_global_state().unitary_price, # Micro Algo
-    )
-
-    atc = algosdk.atomic_transaction_composer.AtomicTransactionComposer()
-    atc.add_transaction(opt_in_tws)
-    
-    app_client_composer = Composer(app_client=app_client.app_client, atc=atc)
-    buy_txn = app_client_composer.buy(
-        buyer_txn=algosdk.atomic_transaction_composer.TransactionWithSigner(
-            txn=buyer_payment_txn, signer=charly.signer),
-            quantity=2,
-            transaction_parameters=algokit_utils.TransactionParameters(
-            sender=charly.address,
-            signer=charly.signer,
-            # Inform the AVM that the transaction uses this asset
-            foreign_assets=[asset_id],
-        ),
-    ).build()
-
-    buy_txn.execute(algod_client, wait_rounds=4)
-
-    display_info(algod_client, ["CHARLY"])
-
-    print("Alice delete the app and get ASA and Algo back")
-
-    sp = algod_client.suggested_params()
-    sp.fee = 3*sp.min_fee 
-    sp.flat_fee = True
-    # Delete the smart contract application
-    app_client.delete_delete_application(
-        transaction_parameters=algokit_utils.TransactionParameters(
-            # Tell the AVM that the transaction involves this asset
-            foreign_assets=[asset_id],
-            suggested_params=sp,
+    algorand.send.asset_transfer(
+        au.AssetTransferParams(
+            sender=alice.address,
+            signer=alice.signer,
+            amount=10,
+            receiver=ac.app_address,
+            asset_id=asset_id
         )
     )
-    
-    display_info(algod_client, ["ALICE","BOB","CHARLY"])
+    print(f"Hold ASA-ID= {algod_client.account_info(ac.app_address)['assets']}")
+
+    amt_to_buy = 2
+    print(f"Charly buy {amt_to_buy} token")
+    composer = algorand.new_group()
+    composer.add_asset_opt_in(
+        au.AssetOptInParams(
+            sender=charly.address,
+            signer=charly.signer,
+            asset_id=asset_id
+        )
+    )
+    buyer_payment_txn = algorand.create_transaction.payment(
+        au.PaymentParams(
+            sender=charly.address,
+            receiver=ac.app_address,
+            amount=au.AlgoAmount(
+                micro_algo=amt_to_buy*ac.state.global_state.unitary_price
+            ),
+            extra_fee=au.AlgoAmount(micro_algo=sp.min_fee)
+        )
+    )
+    atc = au.AtomicTransactionComposer()
+    composer.add_app_call_method_call(
+        ac.params.buy(
+            cl.BuyArgs(
+                buyer_txn=att.TransactionWithSigner(
+                    txn=buyer_payment_txn,
+                    signer=charly.signer
+                ),
+                quantity=2
+            ),
+            au.CommonAppCallParams(
+                sender=charly.address,
+                signer=charly.signer,
+                # Inform the AVM that the transaction uses this asset
+                asset_references=[asset_id],
+            )
+        )
+    )
+    composer.send()
+
+    display_info(algorand, ["CHARLY"])
+
+    print("Alice delete the app and get ASA and Algo back")
+    # Delete the smart contract
+
+    ac.send.delete.delete_application(
+        au.CommonAppCallParams(
+            # Tell the AVM that the transaction involves this asset
+            asset_references=[asset_id],
+            extra_fee=au.AlgoAmount(micro_algo=3*sp.min_fee)
+        )
+    )
+
+    display_info(algorand, ["ALICE", "BOB", "CHARLY"])

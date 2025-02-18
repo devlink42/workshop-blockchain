@@ -1,26 +1,30 @@
-import algokit_utils
-import algosdk, base64
+import algokit_utils as au
+import algokit_utils.transactions.transaction_composer as att
+import algosdk
 import os
 
-if not(os.path.exists("client.py")):
+if not (os.path.exists("client.py")):
     os.system("algokit compile py --out-dir ./app app.py")
     os.system("algokit generate client app/DigitalMarketplace.arc32.json --output client.py")
-from client import DigitalMarketplaceClient
-## This is for example only.
-## The following is unsafe to do in codespace and should be done on local machine.
+import client as cl
+# This is for example only.
+# The following is unsafe to do in codespace and should be done on local machine.
+
+
+def ai(address):
+    return (address)
+
 
 if __name__ == "__main__":
-    print("deploy_testnet") 
-    config_client = algokit_utils.get_algonode_config(network="testnet", token="",config="algod")
-    algod_client = algokit_utils.get_algod_client(config=config_client)
+    print("deploy_testnet")
 
-    config_indexer = algokit_utils.get_algonode_config(network="testnet", token="",config="indexer")
-    indexer_client = algokit_utils.get_indexer_client(config=config_indexer)
+    algorand = au.AlgorandClient.testnet()
+    algod_client = algorand.client.algod
+    indexer_client = algorand.client.indexer
     print(algod_client.block_info(0))
     print(indexer_client.health())
 
-
-    if not(os.path.exists(".env")):
+    if not (os.path.exists(".env")):
         private_key, address = algosdk.account.generate_account()
         with open(".env", "w") as file:
             file.write(algosdk.mnemonic.from_private_key(private_key))
@@ -28,93 +32,96 @@ if __name__ == "__main__":
     with open(".env", "r") as file:
         mnemonic = file.read()
 
-    alice = algokit_utils.models.Account(private_key=algosdk.mnemonic.to_private_key(mnemonic))
+    alice = algorand.account.from_mnemonic(mnemonic=mnemonic)
 
-    app_client = DigitalMarketplaceClient(
-        algod_client,
-        creator=alice,
-        indexer_client=indexer_client
+    factory = algorand.client.get_typed_app_factory(
+        cl.DigitalMarketplaceFactory, default_sender=alice.address
     )
-    
-    
-    ## We need to fund the account here.
-    ## algokit explore
-    ## Switch network to testnet
-    ## Install a wallet (like lute)
-    ## Connect your account by entering the mnemonic in your .env
-    ## go to to get some free Test net Algo (Only need one)
-    ## https://lora.algokit.io/testnet/fund
-    if len(algod_client.account_info(alice.address)["created-assets"]) == 0:
-        create_asa =  algosdk.transaction.AssetCreateTxn(
-        sender=alice.address,
-        sp=algod_client.suggested_params(),
-        total=15,
-        decimals=0,
-        default_frozen=False,
-        unit_name="PY-CL-FD", # 8 Max
-        asset_name="Proof of Attendance Py-Clermont",
-        url="https://pyclermont.org/",
-        note="Hello Clermont",
-        )
-        create_asa_signed = create_asa.sign(alice.private_key)
-        create_asa_tx_id = algod_client.send_transaction(create_asa_signed)
-        res = algosdk.transaction.wait_for_confirmation(algod_client, create_asa_tx_id, 4)
-        print("Transaction confirmed {result.confirmed_round}")
-        asset_id = res["asset-index"]
-    else:
-        asset_id = algod_client.account_info(alice.address)["created-assets"][0]["index"]
-    print("Asset ID:", asset_id)
+    # We need to fund the account here.
+    # algokit explore
+    # Switch network to testnet
+    # Install a wallet (like lute)
+    # Connect your account by entering the mnemonic in your .env
+    # go to to get some free Test net Algo (Only need one)
+    # https://lora.algokit.io/testnet/fund
 
-    price = 100_000
-    if len(algod_client.account_info(alice.address)["created-apps"]) == 0:
-        app_client.create_create_application(asset_id=asset_id, unitary_price=price)
-        app_id = app_client.app_id
-    else:
-        app_id = algod_client.account_info(alice.address)["created-apps"][0]["id"]
-        app_client.app_id = app_id
-
-
-    if len(algod_client.account_info(app_client.app_address)["assets"]) == 0:
-        sp = algod_client.suggested_params()
-        sp.fee = 2 * sp.min_fee # extra_fee
-        sp.flat_fee = True
-        mbr_pay_txn = algosdk.transaction.PaymentTxn(
-            sender=alice.address,
-            sp=sp,
-            receiver=app_client.app_address,
-            amt=200_000, #0,1 account creation + 0,1 Hold ASA
-        )
-
-        result = app_client.opt_in_to_asset(
-            mbr_pay=algosdk.atomic_transaction_composer.TransactionWithSigner(mbr_pay_txn, signer=alice.signer),
-            transaction_parameters=algokit_utils.TransactionParameters(
-                foreign_assets=[asset_id]
+    if len(ai(alice.address)["created-assets"]) == 0:
+        result = algorand.send.asset_create(
+            au.AssetCreateParams(
+                sender=alice.address,
+                signer=alice.signer,
+                total=15,
+                decimals=0,
+                default_frozen=False,
+                unit_name="PY-CL-FD",  # 8 Max
+                asset_name="Proof of Attendance Py-Clermont",
+                url="https://pyclermont.org/",
+                note="Hello Clermont",
             )
         )
-        
-        print(f"Transaction confirmed {result.confirmed_round}")
+        asset_id = result.confirmation["asset-index"]
+    else:
+        asset_id = ai(alice.address)["created-assets"][0]["index"]
+    print("Asset ID:", asset_id)
 
-    if algod_client.account_info(app_client.app_address)["assets"][0]["amount"] == 0:
+    price = au.AlgoAmount(micro_algo=100_000)
+    if len(ai(alice.address)["created-apps"]) == 0:
+        result, _ = factory.send.create.create_application(
+            cl.CreateApplicationArgs(
+                asset_id=asset_id, unitary_price=price.micro_algo
+            )
+        )
+        app_id = result.app_id
+    else:
+        app_id = ai(alice.address)["created-apps"][0]["id"]
+
+    ac = factory.get_app_client_by_id(app_id, default_sender=alice.address)
+    print(f"App {app_id} deployed with address {ac.app_address}")
+    sp = algorand.get_suggested_params()
+    if len(ai(ac.app_address)["assets"]) == 0:
+        mbr_pay_txn = algorand.create_transaction.payment(
+            au.PaymentParams(
+                sender=alice.address,
+                receiver=ac.app_address,
+                amount=au.AlgoAmount(algo=0.2),
+                extra_fee=au.AlgoAmount(micro_algo=sp.min_fee)
+            )
+        )
+
+        result = ac.send.opt_in_to_asset(
+            cl.OptInToAssetArgs(
+                mbr_pay=att.TransactionWithSigner(mbr_pay_txn, alice.signer)
+            ),
+            au.CommonAppCallParams(
+                asset_references=[asset_id]
+            )
+        )
+
+        print(f"Transaction confirmed {result.confirmation['confirmed-round']}")
+
+        print(
+            f"App can now Hold ASA-ID= {
+                ai(ac.app_address)['assets']
+            }"
+        )
+
+    if ai(ac.app_address)["assets"][0]["amount"] == 0:
         print("Alice send ASAs to the App")
-        result = algod_client.send_transaction(algosdk.transaction.AssetTransferTxn(
-            sender=alice.address,
-            sp=algod_client.suggested_params(),
-            amt=10,
-            receiver=app_client.app_address,
-            index=asset_id
-        ).sign(alice.private_key))
-        print("Transaction confirmed {result.confirmed_round}")
-        print(f"Hold ASA-ID= {algod_client.account_info(app_client.app_address)['assets']}")
+        result = algorand.send.asset_transfer(
+            au.AssetTransferParams(
+                sender=alice.address,
+                signer=alice.signer,
+                amount=10,
+                receiver=ac.app_address,
+                asset_id=asset_id
+            )
+        )
+        print(f"Transaction confirmed {result.confirmation['confirmed-round']}")
+        print(f"Hold ASA-ID= {ai(ac.app_address)['assets']}")
 
-    sp = algod_client.suggested_params()
-    sp.fee = 3*sp.min_fee 
-    sp.flat_fee = True
-    # Delete the smart contract application
-    app_client.delete_delete_application(
-        transaction_parameters=algokit_utils.TransactionParameters(
-            # Tell the AVM that the transaction involves this asset
-            foreign_assets=[asset_id],
-            suggested_params=sp,
+    ac.send.delete.delete_application(
+        au.CommonAppCallParams(
+            asset_references=[asset_id],
+            extra_fee=au.AlgoAmount(micro_algo=3*sp.min_fee)
         )
     )
-    
