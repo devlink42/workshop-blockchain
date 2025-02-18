@@ -1,21 +1,21 @@
 {
-    "forwardPorts": [4001, 4002, 8980, 5173],
-    "portsAttributes": {
-      "4001": {
-        "label": "algod"
-      },
-      "4002": {
-        "label": "kmd"
-      },
-      "8980": {
-        "label": "indexer"
-      },
-      "5173": {
-        "label": "vite"
-      }
+  "forwardPorts": [4001, 4002, 8980, 5173],
+  "portsAttributes": {
+    "4001": {
+      "label": "algod"
     },
-    "postCreateCommand": "pipx install algokit && pip install algorand-python && git clone https://github.com/algorandfoundation/algokit-utils-py.git && cd algokit-utils-py && pip install . && cd .. && mkdir -p app && touch workshop.py && touch app.py",
-    "postStartCommand": "algokit localnet start",
-    "postAttachCommand":
-        "CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 4001:public --codespace $CODESPACE_NAME && CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 4002:public --codespace $CODESPACE_NAME && CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 5173:public --codespace $CODESPACE_NAME && CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 8980:public --codespace $CODESPACE_NAME"
+    "4002": {
+      "label": "kmd"
+    },
+    "8980": {
+      "label": "indexer"
+    },
+    "5173": {
+      "label": "vite"
+    }
+  },
+  "postCreateCommand": "pipx install algokit && pip install algokit-client-generator && pip install algorand-python && pip install algokit-utils && mkdir -p app && touch workshop.py && touch app.py",
+  "postStartCommand": "algokit localnet start",
+  "postAttachCommand":
+      "CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 4001:public --codespace $CODESPACE_NAME && CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 4002:public --codespace $CODESPACE_NAME && CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 5173:public --codespace $CODESPACE_NAME && CODESPACE_NAME=$(gh codespace list --json name -q '.[0].name') && gh codespace ports visibility 8980:public --codespace $CODESPACE_NAME"
 }
