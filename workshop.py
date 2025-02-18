@@ -157,7 +157,7 @@ if __name__ == "__main__":
             extra_fee=au.AlgoAmount(micro_algo=sp.min_fee)
         )
     )
-    atc = au.AtomicTransactionComposer()
+
     composer.add_app_call_method_call(
         ac.params.buy(
             cl.BuyArgs(
