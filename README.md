@@ -1,28 +1,45 @@
 # TP 1
 
+Pour commencer, il faut tout créer un fichier python.
+
+```console
+touch txn.py
+```
+
+## Import
+
+```python
+import algokit_utils as au
+import algosdk as sdk
+from utils import (
+    account_creation,
+    display_info,
+)
+```
+
+## Choisir son réseau
+
+[Algorand Client](https://algorandfoundation.github.io/algokit-utils-py/autoapi/algokit_utils/algorand/index.html#algokit_utils.algorand.AlgorandClient)
+> Pour localnet `algorand = au.AlgorandClient.from_environment()`
+
+### Verifier que le réseau est correctement initialisé
+
+```python
+    print(algorand.client.algod.block_info(0))
+    print(algorand.client.indexer.health())
+```
+
 ## Création des comptes
 
 ```python
-import os
-import algosdk
-import algokit_utils
-from utils import client_configuration, indexer_configuration, account_creation, display_info
-
-if __name__ == "__main__":
-    algod_client = client_configuration()
-
-    print(algod_client.block_info(0))
-    if not (os.path.exists(".env")):
-        alice = account_creation(algod_client, "ALICE", funds=100_000_000)
-        with open(".env", "w") as file:
-            file.write(algosdk.mnemonic.from_private_key(alice.private_key))
-    with open(".env", "r") as file:
-        mnemonic = file.read()
-    alice = algokit_utils.models.Account(private_key=algosdk.mnemonic.to_private_key(mnemonic))
-    bob = account_creation(algod_client, "BOB")
+    alice = account_creation(algorand, "ALICE", au.AlgoAmount(algo=10_000))
+    bob = account_creation(algorand, "BOB", au.AlgoAmount(algo=100))
 ```
 
 > Plus de details sur [Documentation algokit utils](https://algorandfoundation.github.io/algokit-utils-py/).
+
+You can display the mnemonic associated with an account like this:
+`sdk.mnemonic.from_private_key(alice.private_key)`
 
 ## Création d'un payment d'alice vers Bob de 1 Algo
 
