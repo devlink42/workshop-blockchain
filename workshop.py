@@ -114,9 +114,7 @@ if __name__ == "__main__":
         cl.OptInToAssetArgs(
             mbr_pay=att.TransactionWithSigner(mbr_pay_txn, alice.signer)
         ),
-        au.CommonAppCallParams(
-            asset_references=[asset_id]
-        )
+        send_params=au.SendParams(populate_app_call_resources=True)
     )
 
     print(
@@ -165,17 +163,15 @@ if __name__ == "__main__":
                     txn=buyer_payment_txn,
                     signer=charly.signer
                 ),
-                quantity=2
+                quantity=2,
             ),
             au.CommonAppCallParams(
                 sender=charly.address,
                 signer=charly.signer,
-                # Inform the AVM that the transaction uses this asset
-                asset_references=[asset_id],
             )
         )
     )
-    composer.send()
+    composer.send(au.SendParams(populate_app_call_resources=True))
 
     display_info(algorand, ["CHARLY"])
 
@@ -183,11 +179,10 @@ if __name__ == "__main__":
     # Delete the smart contract
 
     ac.send.delete.delete_application(
-        au.CommonAppCallParams(
-            # Tell the AVM that the transaction involves this asset
-            asset_references=[asset_id],
+        cl.DigitalMarketplaceMethodCallDeleteParams(
             extra_fee=au.AlgoAmount(micro_algo=3*sp.min_fee)
-        )
+        ),
+        send_params=au.SendParams(populate_app_call_resources=True)
     )
 
     display_info(algorand, ["ALICE", "BOB", "CHARLY"])
