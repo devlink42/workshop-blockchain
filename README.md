@@ -96,7 +96,7 @@ Anything you do on your local environment will be displayed here.
 
 # Workshop
 
-**You can use the workshop.py** file already [here]((https://github.com/SudoWeezy/Introduction/blob/workshop/workshop.py)) **OR** do the following:
+**You can use the workshop.py** file already [here](https://github.com/SudoWeezy/Introduction/blob/workshop/workshop.py) **OR** do the following:
 
 
 ## Imports
@@ -308,7 +308,7 @@ We will define 5 methods:
 - `buy` (Allows someone to buy an asset from the smart contract)
 - `delete_application` (When Alice don't wants to send her token anymore and get the money back)
 
-**You can use the app.py** file already [here]((https://github.com/SudoWeezy/Introduction/blob/workshop/app.py)) **OR** do the following:
+**You can use the app.py** file already [here](https://github.com/SudoWeezy/Introduction/blob/workshop/app.py) **OR** do the following:
 
 #### Code the smart contract
 
@@ -643,6 +643,6 @@ Here our main goal is to make you interact with the testnet network.
 12. Uncheck `Set fee automatically`and enter `0.002` ( there are 2 Transaction, the Payment and the Buy) then `Add`
 13. Click on `Populate Ressource`
 14. Click on `Send`
-15. Now if you click on your Account on the top Left and on `View`, you will see that you have `Proof of Attendance Py-Clermont`in your Assets held.
+15. Now if you click on your Account on the top Left and on `View`, you will see that you have `Proof of Attendance Py-Clermont` in your Assets held.
 
-> To be able to use the ABI methods, the ARC-32 json file has been added here [here](https://lora.algokit.io/testnet/app-lab/create)
+> To be able to use the ABI methods, the ARC-32 json file has been added [here](https://lora.algokit.io/testnet/app-lab/create)
